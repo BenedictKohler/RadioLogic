@@ -121,6 +121,49 @@ app.post("/image", async (req, res) => {
 
 });
 
+// Adds a new image to the database
+app.put("/image", async (req, res) => {
+
+    try {
+
+        const imageData = req.body.imageData;
+        
+        req.body.dateAdded = getCurrentDateTime();
+
+        let filepath = base64Img.imgSync(imageData, './server/images', Date.now());
+        const arr = filepath.split('\\');
+
+        req.body.imageData = 'http://localhost:8000/' + arr[arr.length - 1];
+
+        connection.query('update image set imageData = ?, dateAdded = ? where imageId = ?', [req.body.imageData, req.body.dateAdded, req.body.imageId], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
+// Adds a new message to the database
+app.post("/message", async (req, res) => {
+
+    try {
+        
+        req.body.date = getCurrentDateTime();
+
+        connection.query('insert into message (chatId, senderId, receiverId, text, date) values (?, ?, ?, ?, ?)', [req.body.chatId, req.body.senderId, req.body.receiverId, req.body.text, req.body.date], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
 // Gets all chats associated with a particular patient from the database
 app.get("/chats/:patientId", async (req, res) => {
 
