@@ -24,8 +24,11 @@ import { Link } from 'react-router-dom';
 
 class Home extends React.Component {
 
+    userId = null;
+
     constructor(props) {
         super(props);
+        this.userId = sessionStorage.getItem('userId');
         this.state = {
             patients: [], patientsTemp: [],
             isLoading: true, dropValue: "Order By", isError: false,
@@ -37,7 +40,7 @@ class Home extends React.Component {
     async componentDidMount() {
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getPatients(this.props.location.user.data[0].userId);
+            let result = await RadioLogicService.getPatients(this.userId);
             if (result.status === 200) {
                 // If all good then render patients on screen
                 this.setState({ isLoading: false, patients: result.data, patientsTemp: result.data });

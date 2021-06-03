@@ -18,20 +18,24 @@ import RadioLogicService from '../services/RadioLogicService';
 
 class PatientImages extends React.Component {
 
+    patient = null;
+
     constructor(props) {
         super(props);
+        if (this.props.location.patient != null) sessionStorage.setItem('patient', JSON.stringify(this.props.location.patient));
         this.state = {
             images: [], imagesTemp: [], dropValue: "Order By",
             isLoading: true, isError: false,
         };
         this.onSearch = this.onSearch.bind(this);
+        this.patient = JSON.parse(sessionStorage.getItem('patient'));
     }
 
     // This method populates the image list by making a call to RadioLogicService
     async componentDidMount() {
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getImages(this.props.location.patient.patientId);
+            let result = await RadioLogicService.getImages(this.patient.patientId);
             if (result.status === 200) {
                 // If all good then render images on screen
                 this.setState({ isLoading: false, images: result.data, imagesTemp: result.data });
@@ -75,7 +79,7 @@ class PatientImages extends React.Component {
                     onDateAsc={this.onDateAsc}
                     onDateDesc={this.onDateDesc}
                     onSearch={this.onSearch}
-                    patient={this.props.location.patient}
+                    patient={this.patient}
                 />
                 {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
                 {!this.state.isLoading && <ImageList images={this.state.images} />}
@@ -128,7 +132,7 @@ class NavTop extends React.Component {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
-                        <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/addimage", patient: this.props.patient }}><RiImageAddFill /> Add new image</Link></Nav.Link>
+                        <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/addimage" }}><RiImageAddFill /> Add new image</Link></Nav.Link>
                         <NavDropdown title={this.props.dropValue} id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={this.props.onDateAsc}>Date Added <AiOutlineArrowUp /></NavDropdown.Item>
                             <NavDropdown.Item onClick={this.props.onDateDesc}>Date Added <AiOutlineArrowDown /></NavDropdown.Item>

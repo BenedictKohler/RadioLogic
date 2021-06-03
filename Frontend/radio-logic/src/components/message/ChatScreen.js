@@ -19,21 +19,25 @@ import RadioLogicService from '../../services/RadioLogicService';
 
 
 class ChatScreen extends React.Component {
+
+    patient = null;
     
     constructor(props) {
         super(props);
+        if (this.props.location.patient != null) sessionStorage.setItem('patient', JSON.stringify(this.props.location.patient));
         this.state = {
             chats: [], chatsTemp: [], dropValue: "Order By",
             isLoading: true, isError: false,
         };
         this.onSearch = this.onSearch.bind(this);
+        this.patient = JSON.parse(sessionStorage.getItem('patient'));
     }
 
     // This method populates the chat list by making a call to RadioLogicService
     async componentDidMount() {
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getChats(this.props.location.patient.patientId);
+            let result = await RadioLogicService.getChats(this.patient.patientId);
             if (result.status === 200) {
                 // If all good then render chats on screen
                 this.setState({ isLoading: false, chats: result.data, chatsTemp: result.data });
@@ -77,7 +81,7 @@ class ChatScreen extends React.Component {
                     onDateAsc={this.onDateAsc}
                     onDateDesc={this.onDateDesc}
                     onSearch={this.onSearch}
-                    patient={this.props.location.patient}
+                    patient={this.patient}
                 />
                 {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
                 {!this.state.isLoading && <ChatList chats={this.state.chats} />}
@@ -93,7 +97,7 @@ const ChatList = (props) => {
     for (let i = 0; i < props.chats.length; i++) {
         chatList.push(
             <Container className='mx-auto my-2'>
-                <Link style={{ color: 'black', textDecoration: 'none' }} to={{ pathname: "/messages", chat: props.chats[i] }}>
+                <Link style={{ color: 'black', textDecoration: 'none' }} to={{ pathname: "/messages", chatId: props.chats[i].chatId }}>
                     <Card>
                         <Card.Title>
                             <Row>
@@ -123,7 +127,7 @@ class NavTop extends React.Component {
         this.search = this.search.bind(this);
     }
 
-    // This calls its parent component Home to provide updated list of chats
+    // This calls its parent component ChatScreen to provide updated list of chats
     search() {
         this.props.onSearch(this.state.searchValue);
     }

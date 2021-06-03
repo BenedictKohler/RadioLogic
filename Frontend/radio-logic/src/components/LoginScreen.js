@@ -33,7 +33,10 @@ class LoginScreen extends React.Component {
                 let user = await RadioLogicService.getUser(this.state.userId);
                 if (user.data.length === 0) this.setState({userIdError: "Please enter a valid username"})
                 else if (user.data[0].password !== this.state.password) this.setState({passwordError: "Please enter a valid password", userIdError: ""})
-                else this.setState({user: user, redirect: true});
+                else {
+                    sessionStorage.setItem('userId', this.state.userId);
+                    this.setState({user: user, redirect: true});
+                }
             }
             catch (err) {
                 console.log(err.message);
@@ -44,7 +47,7 @@ class LoginScreen extends React.Component {
     }
 
     render() {
-        if (this.state.redirect) return <Redirect to={{ pathname: "/home", user: this.state.user }} />
+        if (this.state.redirect) return <Redirect to={{ pathname: "/home" }} />
         return (
             <Container>
 

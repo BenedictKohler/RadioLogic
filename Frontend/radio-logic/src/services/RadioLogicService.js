@@ -38,6 +38,16 @@ class RadioLogicService {
         return await axios.get('http://localhost:8000/messages/' + chatId);
     }    
 
+    // Get chat associated with the current chatId
+    async getChatById(chatId) {
+        return await axios.get('http://localhost:8000/chat/' + chatId);
+    }   
+
+    // Get image associated with the current imageId
+    async getImage(imageId) {
+        return await axios.get('http://localhost:8000/image/' + imageId);
+    }   
+
 }
 
 export default new RadioLogicService();

@@ -13,9 +13,12 @@ import RadioLogicService from '../services/RadioLogicService';
 // Component for adding a new patient image
 class AddImage extends React.Component {
 
+    patient = null;
+
     // Sets initial states
     constructor(props) {
         super(props);
+        this.patient = JSON.parse(sessionStorage.getItem('patient'));
         this.renderImage = this.renderImage.bind(this);
         this.readFile = this.readFile.bind(this);
         this.state = {
@@ -88,7 +91,7 @@ class AddImage extends React.Component {
 
             // Send the information
             RadioLogicService.addImage({
-                patientId: this.props.location.patient.patientId, name: this.state.imageName, 
+                patientId: this.patient.patientId, name: this.state.imageName, 
                 description: this.state.description, imageData: contents
             }).then(() => {
                 this.setState({ redirect: true }); // Go to previous page
@@ -99,11 +102,11 @@ class AddImage extends React.Component {
 
 
     render() {
-        if (this.state.redirect) return <Redirect to={{ pathname: "/manageimages", patient: this.props.location.patient }} />
+        if (this.state.redirect) return <Redirect to={{ pathname: "/manageimages" }} />
         return (
             <Container>
 
-                <h3 class="mt-3">Add a new image for {this.props.location.patient.name}</h3>
+                <h3 class="mt-3">Add a new image for {this.patient.name}</h3>
 
                 <Form>
 

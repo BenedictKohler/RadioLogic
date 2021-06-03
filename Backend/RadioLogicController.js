@@ -125,7 +125,6 @@ app.post("/image", async (req, res) => {
 app.get("/chats/:patientId", async (req, res) => {
 
     try {
-
         connection.query('select maxDate as dateAdded, fname, lname, text, chatId, userId from (select max(date) as maxDate, text, chatId from message group by chatId) as t1 natural join (select fname, lname, chatId, user.userId from user join chat on user.userId = chat.contactId where chat.patientId = ?) as t2', [req.params.patientId], (error, results, fields) => {
             if (error) throw error;
             res.status(200).json(results);
@@ -141,8 +140,36 @@ app.get("/chats/:patientId", async (req, res) => {
 app.get("/messages/:chatId", async (req, res) => {
 
     try {
-
         connection.query('select * from message where chatId = ? order by date asc', [req.params.chatId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+});
+
+// Gets a chat and by its chatId
+app.get("/chat/:chatId", async (req, res) => {
+
+    try {
+        connection.query('select * from chat where chatId = ?', [req.params.chatId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+});
+
+// Gets an image by imageId
+app.get("/image/:imageId", async (req, res) => {
+
+    try {
+
+        connection.query('select * from image where imageId = ?', [req.params.imageId], (error, results, fields) => {
             if (error) throw error;
             res.status(200).json(results);
         });

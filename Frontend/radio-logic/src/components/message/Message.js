@@ -8,6 +8,10 @@ import Nav from 'react-bootstrap/Nav';
 import { Link } from 'react-router-dom';
 import { RiImageAddFill } from 'react-icons/ri';
 import { GiStethoscope } from 'react-icons/gi';
+import { BsSquareFill } from 'react-icons/bs';
+import { AiOutlineLine } from 'react-icons/ai';
+import { GrUndo } from 'react-icons/gr';
+import { GrRedo } from 'react-icons/gr';
 import Navbar from 'react-bootstrap/Navbar';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
@@ -24,10 +28,15 @@ class Message extends React.Component {
     line = [];
     prevPos = { offsetX: 0, offsetY: 0 };
 
+    chatId = null;
+    image = null;
+
     constructor(props) {
         super(props);
+        if (this.props.location.chatId != null) sessionStorage.setItem('chatId', this.props.location.chatId);
         this.state = {
-            messages: [], isLoading: true, isError: false, penColor: 'Blue'
+            messages: [], isLoading: true, isError: false, penColor: 'Black', penWidth: 'Fine',
+            chat: {}, imageData: null
         };
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
@@ -35,26 +44,16 @@ class Message extends React.Component {
         this.saveImage = this.saveImage.bind(this);
         this.undoChange = this.undoChange.bind(this);
         this.redoChange = this.redoChange.bind(this);
+        this.renderCanvasImage = this.renderCanvasImage.bind(this);
+        this.chatId = sessionStorage.getItem('chatId');
     }
 
     // This method populates the message list by making a call to RadioLogicService
     async componentDidMount() {
 
-        /*var img = document.getElementById("patientImage");
-        img.crossOrigin = "anonymous";
-        this.canvas.width = img.naturalWidth > 600 ? 600 : img.naturalWidth;
-        this.canvas.height = img.naturalHeight > 600 ? 600 : img.naturalHeight;*/
-
-        this.ctx = this.canvas.getContext('2d');
-        this.ctx.lineJoin = 'round';
-        this.ctx.lineCap = 'round';
-        this.ctx.lineWidth = 5;
-        //this.ctx.drawImage(img, 0, 0);
-        //img.src = 'http://localhost:8000/1622202975502.jpg';
-
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getMessages(this.props.location.chat.chatId);
+            let result = await RadioLogicService.getMessages(this.chatId);
             if (result.status === 200) {
                 // If all good then render messages on screen
                 this.setState({ isLoading: false, messages: result.data });
@@ -67,6 +66,62 @@ class Message extends React.Component {
             console.log(err);
             this.setState({ isLoading: false, isError: true });
         }
+
+        // Try sending request to REST API
+        try {
+            let result = await RadioLogicService.getChatById(this.chatId);
+            if (result.status === 200) {
+                // If all good then set chat object
+                this.setState({ isLoading: false, chat: result.data });
+            } else {
+                // Otherwise display an error message
+                this.setState({ isLoading: false, isError: true });
+            }
+            // If the app is unable to connect to the REST API
+        } catch (err) {
+            console.log(err);
+            this.setState({ isLoading: false, isError: true });
+        }
+
+        // Try sending request to REST API
+        try {
+            let result = await RadioLogicService.getUser(this.state.chat.contactId);
+            if (result.status === 200) {
+                // If all good then update chat object
+                this.state.chat.contactName = result.data.fname + " " + result.data.lname;
+            } else {
+                // Otherwise display an error message
+                this.setState({ isLoading: false, isError: true });
+            }
+            // If the app is unable to connect to the REST API
+        } catch (err) {
+            console.log(err);
+            this.setState({ isLoading: false, isError: true });
+        }
+
+        if (this.state.chat.imageId != null) {
+            // Try sending request to REST API
+            try {
+                let result = await RadioLogicService.getImage(this.state.chat.imageId);
+                if (result.status === 200) {
+                    // If all good then set image
+                    this.setState({imageData: result.data.imageData})
+                } else {
+                    // Otherwise display an error message
+                    this.setState({ isLoading: false, isError: true });
+                }
+                // If the app is unable to connect to the REST API
+            } catch (err) {
+                console.log(err);
+                this.setState({ isLoading: false, isError: true });
+            }
+        }
+
+        this.image = new Image();
+        this.image.crossOrigin = 'anonymous';
+        this.image.src = this.state.imageData;
+        this.image.onload = this.renderCanvasImage;
+
     }
 
     onMouseDown({ nativeEvent }) {
@@ -86,6 +141,11 @@ class Message extends React.Component {
             };
             // Add the position to the line array
             this.line = this.line.concat(positionData);
+            var width;
+            if (this.state.penWidth == 'Fine') width = 2;
+            else if (this.state.penWidth == 'Regular') width = 5;
+            else width = 10;
+            this.ctx.lineWidth = width;
             this.draw(this.prevPos, offSetData, this.state.penColor);
         }
     }
@@ -94,7 +154,8 @@ class Message extends React.Component {
         if (this.isDrawing) {
             this.isDrawing = false;
             this.line = [];
-            // This is were you should update the stack values
+            this.undoStack.push(this.canvas.toDataURL());
+            this.redoStack = [];
         }
     }
 
@@ -116,10 +177,56 @@ class Message extends React.Component {
     saveImage() {
     }
 
+    renderCanvasImage() {
+        var newWidth = this.image.naturalWidth;
+        var newHeight = this.image.naturalHeight;
+
+        if (newWidth > newHeight) {
+            while (newWidth > 600) {
+                newWidth *= 0.95;
+                newHeight *= 0.95;
+            }
+        } else {
+            while (newHeight > 500) {
+                newWidth *= 0.95;
+                newHeight *= 0.95;
+            }
+        }
+
+        this.canvas.width = newWidth;
+        this.canvas.height = newHeight;
+
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.lineJoin = 'round';
+        this.ctx.lineCap = 'round';
+        this.ctx.drawImage(this.image, 0, 0);
+    }
+
     undoChange() {
+        if (this.undoStack.length == 0) {
+            return;
+        }
+
+        else if (this.undoStack.length == 1) {
+            this.image.src = 'https://yt3.ggpht.com/ytc/AAUvwnhFY3d8qOpu-KNOALIzsq4ECnGwTPwWmVVpkdM9Fg=s900-c-k-c0x00ffffff-no-rj';
+            this.redoStack.push(this.undoStack.pop());
+            return;
+        }
+
+        this.redoStack.push(this.undoStack.pop());
+
+        var imgSrc = this.undoStack.pop();
+        this.image.src = imgSrc;
+        this.undoStack.push(imgSrc);
     }
 
     redoChange() {
+        if (this.redoStack.length == 0) return;
+
+        var latestImg = this.redoStack.pop();
+        this.undoStack.push(latestImg);
+
+        this.image.src = latestImg;
     }
 
     render() {
@@ -127,38 +234,67 @@ class Message extends React.Component {
             <Container fluid>
 
                 <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" fixed="top">
-                    <Navbar.Brand><GiStethoscope /> Dylan Smith</Navbar.Brand>
+                    <Navbar.Brand><GiStethoscope /> {this.state.chat.contactName}</Navbar.Brand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="mr-auto">
-                            <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/insertImage"}}><RiImageAddFill /> Insert new image</Link></Nav.Link>
+                            <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/insertImage" }}><RiImageAddFill /> Insert new image</Link></Nav.Link>
                             <BsPencil className='my-auto ml-3' />
                             <NavDropdown title={this.state.penColor} id="basic-nav-dropdown">
-                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Red'}) }}>Red</NavDropdown.Item>
-                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Blue'}) }}>Blue</NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Red' }) }}>
+                                    <BsSquareFill style={{ color: 'red' }} /> Red
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Blue' }) }}>
+                                    <BsSquareFill style={{ color: 'blue' }} /> Blue
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Black' }) }}>
+                                    <BsSquareFill style={{ color: 'black' }} /> Black
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'White' }) }}>
+                                    <BsSquareFill style={{ color: 'white' }} /> White
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Yellow' }) }}>
+                                    <BsSquareFill style={{ color: 'yellow' }} /> Yellow
+                                </NavDropdown.Item>
                             </NavDropdown>
+                            <NavDropdown title={this.state.penWidth} id="basic-nav-dropdown">
+                                <NavDropdown.Item onClick={() => { this.setState({ penWidth: 'Fine' }) }}>
+                                    <AiOutlineLine size={10} /> Fine
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penWidth: 'Regular' }) }}>
+                                    <AiOutlineLine size={20} /> Regular
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penWidth: 'Coarse' }) }}>
+                                    <AiOutlineLine size={30} /> Coarse
+                                </NavDropdown.Item>
+                            </NavDropdown>
+                            <GrUndo size={20} onClick={this.undoChange} className='my-auto mx-2' />
+                            <GrRedo size={20} onClick={this.redoChange} className='my-auto mx-2' />
                         </Nav>
                     </Navbar.Collapse>
                 </Navbar>
 
-                <Row className='sticky-top mb-2'>
-                    <Col>
-                        <canvas
-                            ref={(ref) => (this.canvas = ref)}
-                            style={{ background: 'black' }}
-                            onMouseDown={this.onMouseDown}
-                            onMouseLeave={this.endPaintEvent}
-                            onMouseUp={this.endPaintEvent}
-                            onMouseMove={this.onMouseMove}
-                            width="500" height="500"
-                        />
-                    </Col>
-                </Row>
+                {
+                    this.state.imageData != null &&
+                    <Row className='sticky-top mb-2'>
+                        <Col>
+                            <canvas
+                                ref={(ref) => (this.canvas = ref)}
+                                style={{ background: 'black' }}
+                                onMouseDown={this.onMouseDown}
+                                onMouseLeave={this.endPaintEvent}
+                                onMouseUp={this.endPaintEvent}
+                                onMouseMove={this.onMouseMove}
+                                width="500" height="500"
+                            />
+                        </Col>
+                    </Row>
+                }
 
                 <Row className='mb-5'>
                     <Col>
                         {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
-                        {!this.state.isLoading && <MessageList userId={this.props.location.chat.userId} messages={this.state.messages} />}
+                        {!this.state.isLoading && <MessageList userId={this.state.chat.userId} messages={this.state.messages} />}
                     </Col>
                 </Row>
 
