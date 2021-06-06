@@ -19,7 +19,7 @@ import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import RadioLogicService from '../../services/RadioLogicService';
 
-class Message extends React.Component {
+class GeneralMessage extends React.Component {
 
     undoStack = [];
     redoStack = [];
@@ -42,7 +42,6 @@ class Message extends React.Component {
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.endPaintEvent = this.endPaintEvent.bind(this);
-        this.saveImage = this.saveImage.bind(this);
         this.sendImage = this.sendImage.bind(this);
         this.undoChange = this.undoChange.bind(this);
         this.redoChange = this.redoChange.bind(this);
@@ -73,7 +72,7 @@ class Message extends React.Component {
 
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getMessageInfo(this.chatId);
+            let result = await RadioLogicService.getGeneralMessageInfo(this.chatId);
             if (result.status === 200) {
                 // If all good then set chat object
                 this.setState({ isLoading: false, info: result.data[0] });
@@ -150,16 +149,6 @@ class Message extends React.Component {
 
     sendMessage() {
         RadioLogicService.addMessage({chatId: this.chatId, senderId: this.userId, receiverId: this.state.info.contactId, text: this.state.textMessage});
-    }
-
-    saveImage() {
-        if (this.undoStack.length == 0) return;
-        let imgData = this.undoStack.pop();
-        this.undoStack.push(imgData);
-        RadioLogicService.addImage({
-            patientId: this.state.info.patientId, name: this.state.info.name + " Copy",
-            description: this.state.info.description, imageData: imgData
-        });
     }
 
     sendImage() {
@@ -261,7 +250,6 @@ class Message extends React.Component {
                                     <AiOutlineLine size={30} /> Coarse
                                 </NavDropdown.Item>
                             </NavDropdown>
-                            <Button variant='outline-dark' onClick={this.saveImage} className='mx-2'>Save a Copy</Button>
                             <Button variant='outline-dark' onClick={this.sendImage} className='mx-2'>Send Changes</Button>
                         </Nav>
                         <GrUndo size={30} onClick={this.undoChange} className='my-auto mx-2' />
@@ -354,4 +342,4 @@ const MessageList = (props) => {
     return messageList;
 }
 
-export default Message;
+export default GeneralMessage;

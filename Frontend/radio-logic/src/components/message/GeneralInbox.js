@@ -18,26 +18,25 @@ import { Link } from 'react-router-dom';
 import RadioLogicService from '../../services/RadioLogicService';
 
 
-class ChatScreen extends React.Component {
+class GeneralInbox extends React.Component {
 
-    patient = null;
+    userId = null;
     
     constructor(props) {
         super(props);
-        if (this.props.location.patient != null) sessionStorage.setItem('patient', JSON.stringify(this.props.location.patient));
         this.state = {
             chats: [], chatsTemp: [], dropValue: "Order By",
             isLoading: true, isError: false,
         };
         this.onSearch = this.onSearch.bind(this);
-        this.patient = JSON.parse(sessionStorage.getItem('patient'));
+        this.userId = sessionStorage.getItem('userId');
     }
 
     // This method populates the chat list by making a call to RadioLogicService
     async componentDidMount() {
         // Try sending request to REST API
         try {
-            let result = await RadioLogicService.getChats(this.patient.patientId);
+            let result = await RadioLogicService.getGeneralChats(this.userId);
             if (result.status === 200) {
                 // If all good then render chats on screen
                 this.setState({ isLoading: false, chats: result.data, chatsTemp: result.data });
@@ -81,7 +80,6 @@ class ChatScreen extends React.Component {
                     onDateAsc={this.onDateAsc}
                     onDateDesc={this.onDateDesc}
                     onSearch={this.onSearch}
-                    patient={this.patient}
                 />
                 {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
                 {!this.state.isLoading && <ChatList chats={this.state.chats} />}
@@ -97,7 +95,7 @@ const ChatList = (props) => {
     for (let i = 0; i < props.chats.length; i++) {
         chatList.push(
             <Container className='mx-auto my-2'>
-                <Link style={{ color: 'black', textDecoration: 'none' }} to={{ pathname: "/messages", chatId: props.chats[i].chatId }}>
+                <Link style={{ color: 'black', textDecoration: 'none' }} to={{ pathname: "/generalmessages", chatId: props.chats[i].chatId }}>
                     <Card>
                         <Card.Title>
                             <Row>
@@ -135,11 +133,10 @@ class NavTop extends React.Component {
     render() {
         return (
             <Navbar style={{backgroundColor: 'rgb(240, 240, 240)'}} expand="lg" sticky="top">
-                <Navbar.Brand><GiStethoscope /> {this.props.patient.name}</Navbar.Brand>
+                <Navbar.Brand><GiStethoscope /> General Inbox</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
-                        <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/newchat", patientId: this.props.patient.patientId }}><MdMessage /> Start new chat</Link></Nav.Link>
                         <NavDropdown title={this.props.dropValue} id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={this.props.onDateAsc}>Date Added <AiOutlineArrowUp /></NavDropdown.Item>
                             <NavDropdown.Item onClick={this.props.onDateDesc}>Date Added <AiOutlineArrowDown /></NavDropdown.Item>
@@ -155,4 +152,4 @@ class NavTop extends React.Component {
     }
 }
 
-export default ChatScreen;
+export default GeneralInbox;

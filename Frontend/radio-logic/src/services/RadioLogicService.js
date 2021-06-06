@@ -28,9 +28,24 @@ class RadioLogicService {
         return await axios.post('http://localhost:8000/image', data);
     }
 
+    // Send data needed to update an image in the database
+    async updateImage(data) {
+        return await axios.put('http://localhost:8000/image', data);
+    }
+
+    // Send data needed to add a new message to the database
+    async addMessage(data) {
+        return await axios.post('http://localhost:8000/message', data);
+    }
+
     // Get chats associated with the current patient
     async getChats(patientId) {
         return await axios.get('http://localhost:8000/chats/' + patientId);
+    }
+
+    // Get general chats associated with the current user
+    async getGeneralChats(userId) {
+        return await axios.get('http://localhost:8000/generalchats/' + userId);
     }
 
     // Get messages associated with the current chat
@@ -46,7 +61,27 @@ class RadioLogicService {
     // Get image associated with the current imageId
     async getImage(imageId) {
         return await axios.get('http://localhost:8000/image/' + imageId);
-    }   
+    }
+
+    // Get info needed for message page by chatId
+    async getMessageInfo(chatId) {
+        return await axios.get('http://localhost:8000/messageinfo/' + chatId);
+    }  
+
+    // Get info needed for general message page by chatId
+    async getGeneralMessageInfo(chatId) {
+        return await axios.get('http://localhost:8000/generalmessageinfo/' + chatId);
+    }  
+
+    // Get all contacts for the current user
+    async getContacts(userId) {
+        return await axios.get('http://localhost:8000/contacts/' + userId);
+    }
+
+    // Adds a new chat and returns the chatId
+    async addChat(data) {
+        return (await axios.post('http://localhost:8000/chat/', data)).data.insertId;
+    }
 
 }
 

@@ -13,6 +13,7 @@ import FormControl from 'react-bootstrap/FormControl';
 import Navbar from 'react-bootstrap/Navbar';
 import { FaImages } from 'react-icons/fa';
 import { MdMessage } from 'react-icons/md';
+import { FiMail } from 'react-icons/fi';
 import { FaFolderOpen } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { GiStethoscope } from 'react-icons/gi';
@@ -154,6 +155,7 @@ class NavTop extends React.Component {
                             <NavDropdown.Item onClick={this.props.onDateAsc}>Date Added <AiOutlineArrowUp /></NavDropdown.Item>
                             <NavDropdown.Item onClick={this.props.onDateDesc}>Date Added <AiOutlineArrowDown /></NavDropdown.Item>
                         </NavDropdown>
+                        <Link className='ml-1 my-auto' style={{ color: 'grey', textDecoration: 'none' }} to={{ pathname: "/generalinbox" }} ><FiMail /> General Inbox</Link>
                     </Nav>
                     <Form inline>
                         <FormControl type="text" onChange={e => this.setState({ searchValue: e.target.value })} placeholder="Enter patient name" className="mr-sm-2" />

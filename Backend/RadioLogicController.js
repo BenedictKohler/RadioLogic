@@ -51,6 +51,22 @@ app.get("/user/:userId", async (req, res) => {
     
 });
 
+// Gets list of contacts associated with current user
+app.get("/contacts/:userId", async (req, res) => {
+
+    try {
+
+        connection.query('select fname, lname, contactId from user join contact on user.userId = contact.contactId where contact.userId = ?', [req.params.userId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+    
+});
+
 // Gets all patients associated with a particular user from the database
 app.get("/patients/:userId", async (req, res) => {
 
@@ -121,6 +137,22 @@ app.post("/image", async (req, res) => {
 
 });
 
+// Adds a new chat to the database and returns the added object
+app.post("/chat", async (req, res) => {
+
+    try {
+
+        connection.query('insert into chat (userId, contactId, patientId) values (?, ?, ?)', [req.body.userId, req.body.contactId, req.body.patientId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
 // Adds a new image to the database
 app.put("/image", async (req, res) => {
 
@@ -168,7 +200,7 @@ app.post("/message", async (req, res) => {
 app.get("/chats/:patientId", async (req, res) => {
 
     try {
-        connection.query('select maxDate as dateAdded, fname, lname, text, chatId, userId from (select max(date) as maxDate, text, chatId from message group by chatId) as t1 natural join (select fname, lname, chatId, user.userId from user join chat on user.userId = chat.contactId where chat.patientId = ?) as t2', [req.params.patientId], (error, results, fields) => {
+        connection.query('select maxDate as dateAdded, fname, lname, text, chatId, userId from (select max(date) as maxDate, text, chatId from message group by chatId) as t1 natural join (select fname, lname, chatId, user.userId from user join chat on user.userId = chat.contactId where chat.patientId = ?) as t2 order by dateAdded desc', [req.params.patientId], (error, results, fields) => {
             if (error) throw error;
             res.status(200).json(results);
         });
@@ -178,6 +210,52 @@ app.get("/chats/:patientId", async (req, res) => {
     }
     
 });
+
+// Gets all chats in the general inbox. Where current user did not initiate conversation from patients folder
+app.get("/generalchats/:userId", async (req, res) => {
+
+    try {
+        connection.query('select chatId, dateAdded, text, fname, lname from (select max(date) as dateAdded, text, chatId from message group by chatId) as t1 natural join (select * from chat natural join user where chat.userId != ?) as t2 order by dateAdded desc', [req.params.userId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+    
+});
+
+// Gets the info needed for the message page opened from inside a patients folder
+app.get("/messageinfo/:chatId", async (req, res) => {
+
+    try {
+        connection.query('select * from (select imageId, patientId, fname, lname from chat join user on chat.contactId = user.userId where chatId = ?) as t left outer join image using(imageId)', [req.params.chatId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+    
+});
+
+// Gets the info needed for the message page opened from general inbox
+app.get("/generalmessageinfo/:chatId", async (req, res) => {
+
+    try {
+        connection.query('select * from (select imageId, patientId, fname, lname from chat join user on chat.userId = user.userId where chatId = ?) as t left outer join image using(imageId)', [req.params.chatId], (error, results, fields) => {
+            if (error) throw error;
+            res.status(200).json(results);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+    
+});
+
 
 // Gets all messages associated with a particular chat from the database
 app.get("/messages/:chatId", async (req, res) => {
