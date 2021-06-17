@@ -136,6 +136,24 @@ app.post("/image", async (req, res) => {
 
 });
 
+// Adds a new image with existing address to the database
+app.post("/imageAddress", async (req, res) => {
+
+    try {
+        
+        req.body.dateAdded = getCurrentDateTime();
+
+        connection.query('insert into image (patientId, name, description, imageData, dateAdded) values (?, ?, ?, ?, ?)', [req.body.patientId, req.body.name, req.body.description, req.body.imageData, req.body.dateAdded], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
 // Adds a new patient to the database
 app.post("/patient", async (req, res) => {
 
@@ -154,11 +172,41 @@ app.post("/patient", async (req, res) => {
 
 });
 
+// Adds a new contact to the database
+app.post("/contact", async (req, res) => {
+
+    try {
+        connection.query('insert into contact (userId, contactId) values (?, ?)', [req.body.userId, req.body.contactId], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
 // Deletes a patient from the database
 app.delete("/patient/:patientId", async (req, res) => {
 
     try {
         connection.query('delete from patient where patientId = ?', [req.params.patientId], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
+// Deletes an image from the database
+app.delete("/image/:imageId", async (req, res) => {
+
+    try {
+        connection.query('delete from image where imageId = ?', [req.params.imageId], (error, results, fields) => {
             if (error) throw error;
             res.sendStatus(200);
         });
@@ -210,6 +258,21 @@ app.put("/image", async (req, res) => {
 
 });
 
+// Updates a chats image in the database
+app.put("/chatImage", async (req, res) => {
+
+    try {
+        connection.query('update chat set imageId = ? where chatId = ?', [req.body.imageId, req.body.chatId], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
 // Adds a new message to the database
 app.post("/message", async (req, res) => {
 
@@ -247,7 +310,7 @@ app.get("/chats/:patientId", async (req, res) => {
 app.get("/generalchats/:userId", async (req, res) => {
 
     try {
-        connection.query('select chatId, dateAdded, text, fname, lname from (select max(date) as dateAdded, text, chatId from message group by chatId) as t1 natural join (select * from chat natural join user where chat.userId != ?) as t2 order by dateAdded desc', [req.params.userId], (error, results, fields) => {
+        connection.query('select chatId, dateAdded, text, fname, lname from (select max(date) as dateAdded, text, chatId from message group by chatId) as t1 natural join (select * from chat natural join user where chat.contactId = ?) as t2 order by dateAdded desc', [req.params.userId], (error, results, fields) => {
             if (error) throw error;
             res.status(200).json(results);
         });

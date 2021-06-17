@@ -28,14 +28,29 @@ class RadioLogicService {
         return await axios.post('http://localhost:8000/image', data);
     }
 
+    // Send data needed to add a new image by existing address to the database
+    async addImageAddress(data) {
+        return await axios.post('http://localhost:8000/imageAddress', data);
+    }
+
     // Send data needed to update an image in the database
     async updateImage(data) {
         return await axios.put('http://localhost:8000/image', data);
     }
 
+    // Send data needed to update a chat image in the database
+    async updateChatImage(data) {
+        return await axios.put('http://localhost:8000/chatImage', data);
+    }
+
     // Send data needed to add a new message to the database
     async addMessage(data) {
         return await axios.post('http://localhost:8000/message', data);
+    }
+
+    // Send data needed to add a new contact to the database
+    async addContact(data) {
+        return await axios.post('http://localhost:8000/contact', data);
     }
 
     // Get chats associated with the current patient
@@ -91,6 +106,11 @@ class RadioLogicService {
     // Deletes a patient from the database
     async deletePatient(patientId) {
         return await axios.delete('http://localhost:8000/patient/' + patientId);
+    }
+
+    // Deletes an image from the database
+    async deleteImage(imageId) {
+        return await axios.delete('http://localhost:8000/image/' + imageId);
     }
 
 }

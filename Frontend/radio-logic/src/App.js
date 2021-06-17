@@ -11,6 +11,7 @@ import Message from './components/message/Message';
 import GeneralInbox from './components/message/GeneralInbox';
 import GeneralMessage from './components/message/GeneralMessage';
 import CreateChat from './components/CreateChat';
+import InsertChatImage from './components/message/InsertChatImage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route exact path="/newchat" component={CreateChat}></Route>
           <Route exact path="/manageimages" component={PatientImages}></Route>
           <Route exact path="/addimage" component={AddImage}></Route>
+          <Route exact path="/insertImage" component={InsertChatImage}></Route>
           <Route exact path="/messages" component={Message}></Route>
           <Route exact path="/generalmessages" component={GeneralMessage}></Route>
           <Route exact path="/generalInbox" component={GeneralInbox}></Route>

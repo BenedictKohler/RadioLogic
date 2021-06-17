@@ -149,6 +149,7 @@ class GeneralMessage extends React.Component {
 
     sendMessage() {
         RadioLogicService.addMessage({chatId: this.chatId, senderId: this.userId, receiverId: this.state.info.contactId, text: this.state.textMessage});
+        window.location.reload();
     }
 
     sendImage() {
@@ -220,7 +221,7 @@ class GeneralMessage extends React.Component {
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="mr-auto">
-                            <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} to={{ pathname: "/insertImage" }}><RiImageAddFill /> Insert new image</Link></Nav.Link>
+                            <Nav.Link><Link style={{ textDecoration: 'none', color: 'grey' }} ><RiImageAddFill /> Insert new image</Link></Nav.Link>
                             <BsPencil className='my-auto ml-3' />
                             <NavDropdown title={this.state.penColor} id="basic-nav-dropdown">
                                 <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Red' }) }}>

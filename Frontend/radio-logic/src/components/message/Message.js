@@ -150,6 +150,7 @@ class Message extends React.Component {
 
     sendMessage() {
         RadioLogicService.addMessage({chatId: this.chatId, senderId: this.userId, receiverId: this.state.info.contactId, text: this.state.textMessage});
+        window.location.reload();
     }
 
     saveImage() {
@@ -243,11 +244,11 @@ class Message extends React.Component {
                                 <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Black' }) }}>
                                     <BsSquareFill style={{ color: 'black' }} /> Black
                                 </NavDropdown.Item>
-                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'White' }) }}>
-                                    <BsSquareFill style={{ color: 'white' }} /> White
-                                </NavDropdown.Item>
                                 <NavDropdown.Item onClick={() => { this.setState({ penColor: 'Yellow' }) }}>
                                     <BsSquareFill style={{ color: 'yellow' }} /> Yellow
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ penColor: 'White' }) }}>
+                                    <BsSquareFill style={{ color: 'white' }} /> White
                                 </NavDropdown.Item>
                             </NavDropdown>
                             <NavDropdown title={this.state.penWidth} id="basic-nav-dropdown">

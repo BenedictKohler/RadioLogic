@@ -8,6 +8,7 @@ import Form from 'react-bootstrap/Form';
 import FormControl from 'react-bootstrap/FormControl';
 import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 import { RiImageAddFill } from 'react-icons/ri';
 import { MdDelete } from 'react-icons/md';
 import { GiStethoscope } from 'react-icons/gi';
@@ -25,9 +26,11 @@ class PatientImages extends React.Component {
         if (this.props.location.patient != null) sessionStorage.setItem('patient', JSON.stringify(this.props.location.patient));
         this.state = {
             images: [], imagesTemp: [], dropValue: "Order By",
-            isLoading: true, isError: false,
+            isLoading: true, isError: false, imageId: '', showDelete: false
         };
         this.onSearch = this.onSearch.bind(this);
+        this.deleteImage = this.deleteImage.bind(this);
+        this.showDeleteModal = this.showDeleteModal.bind(this);
         this.patient = JSON.parse(sessionStorage.getItem('patient'));
     }
 
@@ -49,6 +52,15 @@ class PatientImages extends React.Component {
             this.setState({ isLoading: false, isError: true });
         }
     }
+
+    async deleteImage() {
+        await RadioLogicService.deleteImage(this.state.imageId);
+        window.location.reload();
+    }
+
+    // Used to display and hide delete modal pop-up
+    showDeleteModal(imageId) {this.setState({showDelete: true, imageId: imageId})}
+    hideDeleteModal = () => { this.setState({ showDelete: false, imageId: '' }) }
 
     // Order images from oldest to newest
     onDateAsc = () => {
@@ -81,8 +93,27 @@ class PatientImages extends React.Component {
                     onSearch={this.onSearch}
                     patient={this.patient}
                 />
+
+                <Modal
+                    show={this.state.showDelete}
+                    onHide={this.hideDeleteModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Delete Patient</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <strong>Warning: </strong>This will permanently remove this image.
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="danger" onClick={this.hideDeleteModal}>Cancel</Button>
+                        <Button variant="success" onClick={this.deleteImage}>Continue</Button>
+                    </Modal.Footer>
+                </Modal>
+
                 {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
-                {!this.state.isLoading && <ImageList images={this.state.images} />}
+                {!this.state.isLoading && <ImageList showDeleteModal={this.showDeleteModal} images={this.state.images} />}
             </Container>
         );
     }
@@ -94,15 +125,18 @@ const ImageList = (props) => {
 
     for (let i = 0; i < props.images.length; i++) {
         imageList.push(
-            <Container style={{width: '50%'}}>
-            <Card className="m-2">
-                <Card.Header>{props.images[i].name}</Card.Header>
-                <Card.Body>
-                    <Card.Img src={props.images[i].imageData} />
-                </Card.Body>
-                <Card.Text className="mt-2 mx-2"><strong>Description:</strong> {props.images[i].description}</Card.Text>
-                <Card.Footer>Date Added: {new Date(props.images[i].dateAdded).toUTCString()}</Card.Footer>
-            </Card>
+            <Container style={{ width: '50%' }}>
+                <Card className="m-2">
+                    <Card.Header>{props.images[i].name}</Card.Header>
+                    <Card.Body>
+                        <Card.Img src={props.images[i].imageData} />
+                    </Card.Body>
+                    <Card.Text className="mt-2 mx-2"><strong>Description:</strong> {props.images[i].description}</Card.Text>
+                    <Card.Footer>
+                        <Button onClick={() => { props.showDeleteModal(props.images[i].imageId) }} variant="outline-danger" className='float-left'>Delete Image</Button>
+                        <p className='float-right'>Date Added: {new Date(props.images[i].dateAdded).toUTCString()}</p>
+                    </Card.Footer>
+                </Card>
             </Container>
         );
     }
@@ -127,7 +161,7 @@ class NavTop extends React.Component {
 
     render() {
         return (
-            <Navbar style={{backgroundColor: 'rgb(240, 240, 240)'}} expand="lg" sticky="top">
+            <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" sticky="top">
                 <Navbar.Brand><GiStethoscope /> {this.props.patient.name}</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">

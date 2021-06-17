@@ -31,7 +31,7 @@ class LoginScreen extends React.Component {
         else {
             try {
                 let user = await RadioLogicService.getUser(this.state.userId);
-                if (user.data.length === 0) this.setState({userIdError: "Please enter a valid username"})
+                if (user.data.length === 0) this.setState({userIdError: "Please enter a valid username"});
                 else if (user.data[0].password !== this.state.password) this.setState({passwordError: "Please enter a valid password", userIdError: ""})
                 else {
                     sessionStorage.setItem('userId', this.state.userId);
