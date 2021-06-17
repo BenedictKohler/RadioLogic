@@ -5,7 +5,6 @@ const base64Img = require('base64-img');
 const port = 8000;
 const app = express();
 app.use(cors());
-app.use(cors());
 app.use(express.static('./server/images'));
 app.use(bodyParser.json({limit: '10mb'}));
 const mysql = require('mysql');
@@ -127,6 +126,39 @@ app.post("/image", async (req, res) => {
         req.body.imageData = 'http://localhost:8000/' + arr[arr.length - 1];
 
         connection.query('insert into image (patientId, name, description, imageData, dateAdded) values (?, ?, ?, ?, ?)', [req.body.patientId, req.body.name, req.body.description, req.body.imageData, req.body.dateAdded], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
+// Adds a new patient to the database
+app.post("/patient", async (req, res) => {
+
+    try {
+        
+        req.body.dateAdded = getCurrentDateTime();
+
+        connection.query('insert into patient (userId, name, description, dateAdded) values (?, ?, ?, ?)', [req.body.userId, req.body.name, req.body.description, req.body.dateAdded], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
+// Deletes a patient from the database
+app.delete("/patient/:patientId", async (req, res) => {
+
+    try {
+        connection.query('delete from patient where patientId = ?', [req.params.patientId], (error, results, fields) => {
             if (error) throw error;
             res.sendStatus(200);
         });

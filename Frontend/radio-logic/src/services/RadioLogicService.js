@@ -83,6 +83,16 @@ class RadioLogicService {
         return (await axios.post('http://localhost:8000/chat/', data)).data.insertId;
     }
 
+    // Adds a new patient to the database
+    async addPatient(data) {
+        return await axios.post('http://localhost:8000/patient', data);
+    }
+
+    // Deletes a patient from the database
+    async deletePatient(patientId) {
+        return await axios.delete('http://localhost:8000/patient/' + patientId);
+    }
+
 }
 
 export default new RadioLogicService();

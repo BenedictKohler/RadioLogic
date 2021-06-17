@@ -11,6 +11,7 @@ import NavDropdown from 'react-bootstrap/NavDropdown';
 import Form from 'react-bootstrap/Form';
 import FormControl from 'react-bootstrap/FormControl';
 import Navbar from 'react-bootstrap/Navbar';
+import Modal from 'react-bootstrap/Modal';
 import { FaImages } from 'react-icons/fa';
 import { MdMessage } from 'react-icons/md';
 import { FiMail } from 'react-icons/fi';
@@ -31,10 +32,14 @@ class Home extends React.Component {
         super(props);
         this.userId = sessionStorage.getItem('userId');
         this.state = {
-            patients: [], patientsTemp: [],
-            isLoading: true, dropValue: "Order By", isError: false,
+            patients: [], patientsTemp: [], showModal: false, showDelete: false,
+            isLoading: true, dropValue: "Order By", isError: false, patientId: '',
+            patientName: "", patientDescription: "", patientNameError: "", patientDescriptionError: ""
         };
         this.onSearch = this.onSearch.bind(this);
+        this.addPatient = this.addPatient.bind(this);
+        this.deletePatient = this.deletePatient.bind(this);
+        this.showDeleteModal = this.showDeleteModal.bind(this);
     }
 
     // This method populates the patient list by making a call to RadioLogicService
@@ -55,6 +60,30 @@ class Home extends React.Component {
             this.setState({ isLoading: false, isError: true });
         }
     }
+
+    // Adds a patient to the database
+    async addPatient() {
+        if (this.state.patientName.length < 1) {
+            this.setState({ patientNameError: "The patient must have a name" });
+            return;
+        }
+
+        await RadioLogicService.addPatient({ userId: this.userId, name: this.state.patientName, description: this.state.patientDescription });
+        window.location.reload();
+    }
+
+    async deletePatient() {
+        await RadioLogicService.deletePatient(this.state.patientId);
+        window.location.reload();
+    }
+
+    // Used to display and hide delete modal pop-up
+    showDeleteModal(patientId) {this.setState({showDelete: true, patientId: patientId})}
+    hideDeleteModal = () => { this.setState({ showDelete: false, patientId: '' }) }
+
+    // Used to display and hide the modal pop-up
+    handleClose = () => { this.setState({ showModal: false }); }
+    handleShow = () => { this.setState({ showModal: true }); }
 
     // Order patients from oldest to newest
     onDateAsc = () => {
@@ -85,9 +114,58 @@ class Home extends React.Component {
                     onDateAsc={this.onDateAsc}
                     onDateDesc={this.onDateDesc}
                     onSearch={this.onSearch}
+                    handleShow={this.handleShow}
                 />
+
+                <Modal
+                    show={this.state.showModal}
+                    onHide={this.handleClose}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Add new patient</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form>
+                            <Form.Group>
+                                <Form.Label>Patient name</Form.Label>
+                                <Form.Control type="text" onChange={e => this.setState({ patientName: e.target.value })} placeholder="Enter patient name" />
+                                <Form.Text className="text-danger">{this.state.patientNameError}</Form.Text>
+                            </Form.Group>
+                            <Form.Group>
+                                <Form.Label>Patient description</Form.Label>
+                                <Form.Control type="text" onChange={e => this.setState({ patientDescription: e.target.value })} placeholder="Enter patient description" />
+                                <Form.Text className="text-danger">{this.state.patientDescriptionError}</Form.Text>
+                            </Form.Group>
+                        </Form>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="danger" onClick={this.handleClose}>Cancel</Button>
+                        <Button variant="success" onClick={this.addPatient}>Save</Button>
+                    </Modal.Footer>
+                </Modal>
+
+                <Modal
+                    show={this.state.showDelete}
+                    onHide={this.hideDeleteModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Delete Patient</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <strong>Warning: </strong>This will remove all images and chats associated with this patient.
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="danger" onClick={this.hideDeleteModal}>Cancel</Button>
+                        <Button variant="success" onClick={this.deletePatient}>Continue</Button>
+                    </Modal.Footer>
+                </Modal>
+
                 {this.state.isLoading && <Spinner className="mt-3" animation="border" />}
-                {!this.state.isLoading && <PatientList patients={this.state.patients} />}
+                {!this.state.isLoading && <PatientList showDeleteModal={this.showDeleteModal} patients={this.state.patients} />}
             </Container>
         );
     }
@@ -99,28 +177,28 @@ const PatientList = (props) => {
 
     for (let i = 0; i < props.patients.length; i++) {
         patientList.push(
-            <Container style={{backgroundColor: "rgb(240, 240, 240)"}}>
-            <Row className="m-3">
-                <Col sm={2} className="my-auto">
-                    <Link style={{color: 'black'}} to={{ pathname: "/manageimages", patient: props.patients[i]}}><FaImages size={30} /></Link>
-                </Col>
-                <Col sm={8}>
-                    <Accordion>
-                        <Card>
-                            <Card.Header>
-                                <Accordion.Toggle as={Button} variant="button" eventKey="0">{props.patients[i].name}</Accordion.Toggle>
-                            </Card.Header>
-                            <Accordion.Collapse eventKey="0">
-                                <Card.Body>Description:<p>{props.patients[i].description}</p></Card.Body>
-                            </Accordion.Collapse>
-                        </Card>
-                    </Accordion>
-                </Col>
-                <Col sm={1} className="my-auto">
-                    <Link style={{color: 'black'}} to={{ pathname: "/chats", patient: props.patients[i]}}><MdMessage size={30} /></Link>
-                </Col>
-                <Col sm={1} className="my-auto"><MdDelete size={30} /></Col>
-            </Row>
+            <Container style={{ backgroundColor: "rgb(240, 240, 240)" }}>
+                <Row className="m-3">
+                    <Col sm={2} className="my-auto">
+                        <Link style={{ color: 'black' }} to={{ pathname: "/manageimages", patient: props.patients[i] }}><FaImages size={30} /></Link>
+                    </Col>
+                    <Col sm={8}>
+                        <Accordion>
+                            <Card>
+                                <Card.Header>
+                                    <Accordion.Toggle as={Button} variant="button" eventKey="0">{props.patients[i].name}</Accordion.Toggle>
+                                </Card.Header>
+                                <Accordion.Collapse eventKey="0">
+                                    <Card.Body>Description:<p>{props.patients[i].description}</p></Card.Body>
+                                </Accordion.Collapse>
+                            </Card>
+                        </Accordion>
+                    </Col>
+                    <Col sm={1} className="my-auto">
+                        <Link style={{ color: 'black' }} to={{ pathname: "/chats", patient: props.patients[i] }}><MdMessage size={30} /></Link>
+                    </Col>
+                    <Col sm={1} className="my-auto"><Link onClick={() => {props.showDeleteModal(props.patients[i].patientId)}} style={{ color: 'black' }} ><MdDelete size={30} /></Link></Col>
+                </Row>
             </Container>
         );
     }
@@ -136,6 +214,7 @@ class NavTop extends React.Component {
         super(props);
         this.state = { searchValue: "" };
         this.search = this.search.bind(this);
+        this.showModal = this.showModal.bind(this);
     }
 
     // This calls its parent component Home to provide updated list of patients
@@ -143,14 +222,18 @@ class NavTop extends React.Component {
         this.props.onSearch(this.state.searchValue);
     }
 
+    showModal() {
+        this.props.handleShow();
+    }
+
     render() {
         return (
-            <Navbar style={{backgroundColor: 'rgb(240, 240, 240)'}} expand="lg" sticky="top">
+            <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" sticky="top">
                 <Navbar.Brand><GiStethoscope /> RadioLogic</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
-                        <Nav.Link onSelect={this.props.addPatient}><BsFillPersonPlusFill /> Add new patient</Nav.Link>
+                        <Nav.Link onClick={this.showModal}><BsFillPersonPlusFill /> Add new patient</Nav.Link>
                         <NavDropdown title={this.props.dropValue} id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={this.props.onDateAsc}>Date Added <AiOutlineArrowUp /></NavDropdown.Item>
                             <NavDropdown.Item onClick={this.props.onDateDesc}>Date Added <AiOutlineArrowDown /></NavDropdown.Item>
