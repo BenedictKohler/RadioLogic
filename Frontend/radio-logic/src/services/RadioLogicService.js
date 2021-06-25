@@ -13,6 +13,11 @@ class RadioLogicService {
         return await axios.get('http://localhost:8000/user/' + userId);
     }
 
+    // Used to add a new user to the database
+    async AddUser(data) {
+        return await axios.post('http://localhost:8000/user', data);
+    }
+
     // Get patients associated with current logged in user
     async getPatients(userId) {
         return await axios.get('http://localhost:8000/patients/' + userId);

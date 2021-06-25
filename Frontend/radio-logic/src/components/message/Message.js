@@ -10,6 +10,8 @@ import { RiImageAddFill } from 'react-icons/ri';
 import { GiStethoscope } from 'react-icons/gi';
 import { BsSquareFill } from 'react-icons/bs';
 import { AiOutlineLine } from 'react-icons/ai';
+import { BiRectangle } from 'react-icons/bi';
+import { RiCheckboxBlankCircleLine } from 'react-icons/ri';
 import { GrUndo } from 'react-icons/gr';
 import { GrRedo } from 'react-icons/gr';
 import Navbar from 'react-bootstrap/Navbar';
@@ -27,6 +29,7 @@ class Message extends React.Component {
     isDrawing = false;
     line = [];
     prevPos = { offsetX: 0, offsetY: 0 };
+    lastPos = { offsetX: 0, offsetY: 0 };
 
     chatId = null;
     userId = null;
@@ -37,7 +40,7 @@ class Message extends React.Component {
         if (this.props.location.chatId != null) sessionStorage.setItem('chatId', this.props.location.chatId);
         this.state = {
             messages: [], isLoading: true, isError: false, penColor: 'Black', 
-            penWidth: 'Fine', info: {}, textMessage: ''
+            penWidth: 'Fine', info: {}, textMessage: '', shape: 'Draw Shape', drawingShape: false
         };
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
@@ -100,11 +103,17 @@ class Message extends React.Component {
 
     onMouseDown({ nativeEvent }) {
         const { offsetX, offsetY } = nativeEvent;
-        this.isDrawing = true;
         this.prevPos = { offsetX, offsetY };
+        if (this.state.drawingShape) return;
+        this.isDrawing = true;
     }
 
     onMouseMove({ nativeEvent }) {
+        if (this.state.drawingShape) {
+            const { offsetX, offsetY } = nativeEvent;
+            this.lastPos = { offsetX, offsetY };
+            return;
+        }
         if (this.isDrawing) {
             const { offsetX, offsetY } = nativeEvent;
             const offSetData = { offsetX, offsetY };
@@ -125,6 +134,34 @@ class Message extends React.Component {
     }
 
     endPaintEvent() {
+        if (this.state.drawingShape) {
+            if (this.state.shape == 'Rectangle') {
+                this.ctx.fillStyle = this.state.penColor;
+                this.ctx.fillRect(Math.min(this.prevPos.offsetX, this.lastPos.offsetX), Math.min(this.prevPos.offsetY, this.lastPos.offsetY),
+                Math.abs(this.prevPos.offsetX - this.lastPos.offsetX), Math.abs(this.prevPos.offsetY - this.lastPos.offsetY));
+            }
+            else if (this.state.shape == 'Circle') {
+                this.ctx.fillStyle = this.state.penColor;
+                this.ctx.beginPath();
+                this.ctx.arc(this.prevPos.offsetX, this.prevPos.offsetY, Math.abs(this.prevPos.offsetX - this.lastPos.offsetX), 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+            else if (this.state.shape == 'Line') {
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = this.state.penColor;
+                var width;
+                if (this.state.penWidth == 'Fine') width = 2;
+                else if (this.state.penWidth == 'Regular') width = 5;
+                else width = 10;
+                this.ctx.lineWidth = width;
+                this.ctx.moveTo(this.prevPos.offsetX, this.prevPos.offsetY);
+                this.ctx.lineTo(this.lastPos.offsetX, this.lastPos.offsetY);
+                this.ctx.stroke();
+            }
+            this.setState({drawingShape: false, shape: 'Draw Shape'});
+            this.undoStack.push(this.canvas.toDataURL());
+            this.redoStack = [];
+        }
         if (this.isDrawing) {
             this.isDrawing = false;
             this.line = [];
@@ -228,7 +265,7 @@ class Message extends React.Component {
             <Container fluid>
 
                 <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" fixed="top">
-                    <Navbar.Brand><GiStethoscope /> {this.state.info.fname} {this.state.info.lname}</Navbar.Brand>
+                    <Link to={{ pathname: '/home' }}><Navbar.Brand><GiStethoscope /> {this.state.info.fname} {this.state.info.lname}</Navbar.Brand></Link>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="mr-auto">
@@ -260,6 +297,17 @@ class Message extends React.Component {
                                 </NavDropdown.Item>
                                 <NavDropdown.Item onClick={() => { this.setState({ penWidth: 'Coarse' }) }}>
                                     <AiOutlineLine size={30} /> Coarse
+                                </NavDropdown.Item>
+                            </NavDropdown>
+                            <NavDropdown title={this.state.shape} id="basic-nav-dropdown">
+                                <NavDropdown.Item onClick={() => { this.setState({ shape: 'Rectangle', drawingShape: true }) }}>
+                                    <BiRectangle size={20} /> Rectangle
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ shape: 'Circle', drawingShape: true }) }}>
+                                    <RiCheckboxBlankCircleLine size={20} /> Circle
+                                </NavDropdown.Item>
+                                <NavDropdown.Item onClick={() => { this.setState({ shape: 'Line', drawingShape: true }) }}>
+                                    <AiOutlineLine size={20} /> Line
                                 </NavDropdown.Item>
                             </NavDropdown>
                             <Button variant='outline-dark' onClick={this.saveImage} className='mx-2'>Save a Copy</Button>
@@ -318,7 +366,7 @@ const MessageList = (props) => {
     let messageList = [];
     let i = 0;
 
-    if (props.imageData == null && props.messages.length > 0) {
+    if (props.imageData == null && props.messages.length > 0 && props.messages[0].text.length > 0) {
         if (props.userId == props.messages[i].senderId) {
             messageList.push(
                 <Container className='mt-6 float-right'>
@@ -336,6 +384,7 @@ const MessageList = (props) => {
     }
 
     for (; i < props.messages.length; i++) {
+        if (props.messages[i].text.length == 0) continue;
         if (props.userId == props.messages[i].senderId) {
             messageList.push(
                 <Container className='float-right'>

@@ -12,6 +12,7 @@ import GeneralInbox from './components/message/GeneralInbox';
 import GeneralMessage from './components/message/GeneralMessage';
 import CreateChat from './components/CreateChat';
 import InsertChatImage from './components/message/InsertChatImage';
+import CreateAccount from './components/CreateAccount';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <BrowserRouter>
         <Switch>
           <Route exact path="/" component={LoginScreen}></Route>
+          <Route exact path="/createaccount" component={CreateAccount}></Route>
           <Route exact path="/home" component={Home}></Route>
           <Route exact path="/chats" component={ChatScreen}></Route>
           <Route exact path="/newchat" component={CreateChat}></Route>

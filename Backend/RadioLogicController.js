@@ -6,14 +6,14 @@ const port = 8000;
 const app = express();
 app.use(cors());
 app.use(express.static('./server/images'));
-app.use(bodyParser.json({limit: '10mb'}));
+app.use(bodyParser.json({ limit: '10mb' }));
 const mysql = require('mysql');
 
 const connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'Tennisgolf@1',
-  database : 'radiologic'
+    host: 'localhost',
+    user: 'root',
+    password: 'Tennisgolf@1',
+    database: 'radiologic'
 });
 
 connection.connect();
@@ -22,7 +22,7 @@ connection.connect();
 app.get("/users", async (req, res) => {
 
     try {
-        
+
         connection.query('select * from user', (error, results, fields) => {
             if (error) throw error;
             res.status(200).json(results);
@@ -47,7 +47,7 @@ app.get("/user/:userId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets list of contacts associated with current user
@@ -63,7 +63,7 @@ app.get("/contacts/:userId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets all patients associated with a particular user from the database
@@ -79,7 +79,7 @@ app.get("/patients/:userId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets all images associated with patientId from the database
@@ -95,7 +95,7 @@ app.get("/images/:patientId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Builds date format compatible with MySql
@@ -117,7 +117,7 @@ app.post("/image", async (req, res) => {
     try {
 
         const imageData = req.body.imageData;
-        
+
         req.body.dateAdded = getCurrentDateTime();
 
         let filepath = base64Img.imgSync(imageData, './server/images', Date.now());
@@ -140,10 +140,25 @@ app.post("/image", async (req, res) => {
 app.post("/imageAddress", async (req, res) => {
 
     try {
-        
+
         req.body.dateAdded = getCurrentDateTime();
 
         connection.query('insert into image (patientId, name, description, imageData, dateAdded) values (?, ?, ?, ?, ?)', [req.body.patientId, req.body.name, req.body.description, req.body.imageData, req.body.dateAdded], (error, results, fields) => {
+            if (error) throw error;
+            res.sendStatus(200);
+        });
+
+    } catch (err) {
+        res.status(500).json({ 'Error': err.message });
+    }
+
+});
+
+// Adds a new user to the database
+app.post("/user", async (req, res) => {
+
+    try {
+        connection.query('insert into user (userId, password, fname, lname) values (?, ?, ?, ?)', [req.body.userId, req.body.password, req.body.fname, req.body.lname], (error, results, fields) => {
             if (error) throw error;
             res.sendStatus(200);
         });
@@ -158,7 +173,7 @@ app.post("/imageAddress", async (req, res) => {
 app.post("/patient", async (req, res) => {
 
     try {
-        
+
         req.body.dateAdded = getCurrentDateTime();
 
         connection.query('insert into patient (userId, name, description, dateAdded) values (?, ?, ?, ?)', [req.body.userId, req.body.name, req.body.description, req.body.dateAdded], (error, results, fields) => {
@@ -205,6 +220,30 @@ app.delete("/patient/:patientId", async (req, res) => {
 // Deletes an image from the database
 app.delete("/image/:imageId", async (req, res) => {
 
+    let imageToDelete = null;
+
+    try {
+        connection.query('select * from image where imageId = ?', [req.params.imageId], (error, results, fields) => {
+            if (error) throw error;
+            imageToDelete = results.data[0];
+        });
+
+    } catch (err) {console.log("Couldn't get image to unlink from server/images")}
+
+    if (imageToDelete != null) {
+        // Now we must delete image from server/images
+        let arr = imageToDelete.imageFileName.split("/");
+        let fileName = arr[arr.length - 1];
+        const path = './server/images/' + fileName;
+
+        // Try to remove it
+        try {
+            fs.unlinkSync(path);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     try {
         connection.query('delete from image where imageId = ?', [req.params.imageId], (error, results, fields) => {
             if (error) throw error;
@@ -239,7 +278,7 @@ app.put("/image", async (req, res) => {
     try {
 
         const imageData = req.body.imageData;
-        
+
         req.body.dateAdded = getCurrentDateTime();
 
         let filepath = base64Img.imgSync(imageData, './server/images', Date.now());
@@ -277,7 +316,7 @@ app.put("/chatImage", async (req, res) => {
 app.post("/message", async (req, res) => {
 
     try {
-        
+
         req.body.date = getCurrentDateTime();
 
         connection.query('insert into message (chatId, senderId, receiverId, text, date) values (?, ?, ?, ?, ?)', [req.body.chatId, req.body.senderId, req.body.receiverId, req.body.text, req.body.date], (error, results, fields) => {
@@ -303,7 +342,7 @@ app.get("/chats/:patientId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets all chats in the general inbox. Where current user did not initiate conversation from patients folder
@@ -318,7 +357,7 @@ app.get("/generalchats/:userId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets the info needed for the message page opened from inside a patients folder
@@ -333,7 +372,7 @@ app.get("/messageinfo/:chatId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 // Gets the info needed for the message page opened from general inbox
@@ -348,7 +387,7 @@ app.get("/generalmessageinfo/:chatId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 
@@ -393,7 +432,7 @@ app.get("/image/:imageId", async (req, res) => {
     } catch (err) {
         res.status(500).json({ 'Error': err.message });
     }
-    
+
 });
 
 app.listen(port, () => console.log(`Phone Catalog REST API listening on port ${port}!`));

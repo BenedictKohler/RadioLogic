@@ -217,7 +217,7 @@ class GeneralMessage extends React.Component {
             <Container fluid>
 
                 <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" fixed="top">
-                    <Navbar.Brand><GiStethoscope /> {this.state.info.fname} {this.state.info.lname}</Navbar.Brand>
+                    <Link to={{ pathname: '/home' }}><Navbar.Brand><GiStethoscope /> {this.state.info.fname} {this.state.info.lname}</Navbar.Brand></Link>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="mr-auto">

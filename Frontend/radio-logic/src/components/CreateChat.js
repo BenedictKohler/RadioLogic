@@ -185,7 +185,7 @@ class NavTop extends React.Component {
     render() {
         return (
             <Navbar style={{ backgroundColor: 'rgb(240, 240, 240)' }} expand="lg" sticky="top">
-                <Navbar.Brand><GiStethoscope /> Contacts</Navbar.Brand>
+                <Link to={{ pathname: '/home' }}><Navbar.Brand><GiStethoscope /> Contacts</Navbar.Brand></Link>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">

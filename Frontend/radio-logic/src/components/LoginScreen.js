@@ -2,7 +2,7 @@ import React from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
-import { Redirect } from 'react-router-dom';
+import { Redirect, Link } from 'react-router-dom';
 import RadioLogicService from '../services/RadioLogicService';
 
 class LoginScreen extends React.Component {
@@ -67,6 +67,7 @@ class LoginScreen extends React.Component {
                     </Form.Group>
 
                     <Button class="mt-3" variant="outline-success" onClick={this.onLogin} type="button">Login</Button>
+                    <p class='m-2'>Don't have an account? <Link to={{ pathname: '/createaccount' }}>Create one</Link></p>
                 </Form>
 
             </Container>
