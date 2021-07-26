@@ -98,19 +98,6 @@ app.get("/images/:patientId", async (req, res) => {
 
 });
 
-// Builds date format compatible with MySql
-getCurrentDateTime = () => {
-    var date;
-    date = new Date();
-    date = date.getUTCFullYear() + '-' +
-        ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' +
-        ('00' + date.getUTCDate()).slice(-2) + ' ' +
-        ('00' + date.getUTCHours()).slice(-2) + ':' +
-        ('00' + date.getUTCMinutes()).slice(-2) + ':' +
-        ('00' + date.getUTCSeconds()).slice(-2);
-    return date;
-}
-
 // Adds a new image to the database
 app.post("/image", async (req, res) => {
 
@@ -272,7 +259,7 @@ app.post("/chat", async (req, res) => {
 
 });
 
-// Adds a new image to the database
+// Updates an image in the database
 app.put("/image", async (req, res) => {
 
     try {
@@ -405,7 +392,7 @@ app.get("/messages/:chatId", async (req, res) => {
     }
 });
 
-// Gets a chat and by its chatId
+// Gets a chat by its chatId
 app.get("/chat/:chatId", async (req, res) => {
 
     try {
@@ -434,5 +421,18 @@ app.get("/image/:imageId", async (req, res) => {
     }
 
 });
+
+// Builds date format compatible with MySql
+getCurrentDateTime = () => {
+    var date;
+    date = new Date();
+    date = date.getUTCFullYear() + '-' +
+        ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' +
+        ('00' + date.getUTCDate()).slice(-2) + ' ' +
+        ('00' + date.getUTCHours()).slice(-2) + ':' +
+        ('00' + date.getUTCMinutes()).slice(-2) + ':' +
+        ('00' + date.getUTCSeconds()).slice(-2);
+    return date;
+}
 
 app.listen(port, () => console.log(`Phone Catalog REST API listening on port ${port}!`));
